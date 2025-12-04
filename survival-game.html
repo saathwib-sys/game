@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survival Hero - Rescue & Fight</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            gap: 20px;
+        }
+
+        .game-container {
+            position: relative;
+            width: 1000px;
+            height: 700px;
+            background: #2c3e50;
+            border: 5px solid #34495e;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #87CEEB 0%, #98D8C8 50%, #6B8E23 100%);
+            cursor: crosshair;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .stats {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 200px;
+            pointer-events: auto;
+            border: 2px solid #34495e;
+        }
+
+        .stats-sidebar {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 220px;
+            border: 2px solid #34495e;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .stat-item {
+            margin: 5px 0;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-label {
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        .health-bar {
+            width: 150px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .armor-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .controls h3 {
+            margin-bottom: 10px;
+        }
+
+        .controls p {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 200;
+            display: none;
+        }
+
+        .game-over h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #e74c3c;
+        }
+
+        .game-over button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .game-over button:hover {
+            background: #2980b9;
+        }
+
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+
+        .start-screen h1 {
+            font-size: 56px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .start-screen p {
+            font-size: 20px;
+            margin: 10px 0;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .start-screen button {
+            padding: 20px 40px;
+            font-size: 24px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 30px;
+            font-weight: bold;
+        }
+
+        .start-screen button:hover {
+            background: #27ae60;
+            transform: scale(1.05);
+        }
+
+        .ammo {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .ammo-icon {
+            font-size: 20px;
+        }
+
+        .boss-health-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 300px;
+            z-index: 100;
+            border: 3px solid #e74c3c;
+        }
+
+        .boss-label {
+            color: #e74c3c;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .boss-health-bar {
+            width: 100%;
+            height: 30px;
+            background: #333;
+            border: 3px solid #fff;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .boss-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b, #8b0000);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="stats-sidebar" id="statsSidebar">
+        <h3 style="text-align: center; margin-bottom: 15px; color: #3498db;">📊 Stats</h3>
+        <div class="stat-item">
+            <span class="stat-label">Health:</span>
+            <div class="health-bar">
+                <div class="health-fill" id="healthFill">100%</div>
+            </div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Armor:</span>
+            <div class="health-bar">
+                <div class="armor-fill" id="armorFill">100%</div>
+            </div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Score:</span>
+            <span id="score">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Rescued:</span>
+            <span id="rescued">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Kills:</span>
+            <span id="kills">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Ammo:</span>
+            <div class="ammo">
+                <span class="ammo-icon">🔫</span>
+                <span id="ammo">100</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Wave:</span>
+            <span id="wave">1</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Level:</span>
+            <span id="level">1</span> / <span id="maxLevel">100</span>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <canvas id="gameCanvas" width="1000" height="700"></canvas>
+        
+        <div class="boss-health-container" id="bossHealthContainer" style="display: none;">
+            <div class="boss-label">QUEEN BOSS</div>
+            <div class="boss-health-bar">
+                <div class="boss-health-fill" id="bossHealthFill"></div>
+            </div>
+        </div>
+
+        <div class="controls" id="controlsBar">
+            <h3>🎮 Controls</h3>
+            <p><strong>WASD</strong> or <strong>Arrow Keys</strong> - Move | <strong>Mouse</strong> - Aim & Shoot | <strong>Space</strong> - Reload</p>
+            <p>Help civilians (👤) and eliminate enemies (👹) to survive!</p>
+            <p>You are a powerful tank facing a regal queen boss!</p>
+        </div>
+
+        <div class="game-over" id="gameOver">
+            <h2>Game Over!</h2>
+            <p id="finalScore">Final Score: 0</p>
+            <p id="finalStats"></p>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+
+        <div class="start-screen" id="startScreen">
+            <h1>🛡️ Tank Survival</h1>
+            <p>You are a powerful tank fighting to save civilians from enemies!</p>
+            <p>Face off against a regal queen boss and eliminate threats.</p>
+            <p>Stay alive as long as you can!</p>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameStarted = false;
+        let gameOver = false;
+        let score = 0;
+        let rescued = 0;
+        let kills = 0;
+        let wave = 1;
+        let level = 1;
+        let ammo = 100;
+        let maxAmmo = 100;
+        let health = 100;
+        let maxHealth = 100;
+        let armor = 100;
+        let maxArmor = 100;
+        let bossActive = false;
+        let bossSpawned = false;
+        let lastBossKillCount = 0;
+        
+        // Player (tank)
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 25, // Slightly larger for tank
+            speed: 4, // Slightly slower for tank
+            color: '#34495e',
+            vx: 0, // Velocity for smooth movement
+            vy: 0,
+            acceleration: 0.5, // Higher acceleration for smoother response
+            friction: 0.88 // Better friction for smoother deceleration
+        };
+        
+        // Boss
+        let boss = null;
+        
+        // Arrays
+        let bullets = [];
+        let enemies = [];
+        let civilians = [];
+        let particles = [];
+        let powerUps = [];
+        let obstacles = [];
+        
+        // Input
+        const keys = {};
+        let mouse = { x: 0, y: 0 };
+        
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ' && gameStarted && !gameOver) {
+                e.preventDefault();
+                reload();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('click', (e) => {
+            if (gameStarted && !gameOver && ammo > 0) {
+                shoot();
+            }
+        });
+        
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('controlsBar').style.display = 'none';
+            gameStarted = true;
+            gameOver = false;
+            resetGame();
+            gameLoop();
+            spawnEnemies();
+            spawnCivilians();
+        }
+        
+        function resetGame() {
+            score = 0;
+            rescued = 0;
+            kills = 0;
+            wave = 1;
+            level = 1;
+            ammo = 100;
+            health = 100;
+            armor = 100;
+            bossActive = false;
+            bossSpawned = false;
+            lastBossKillCount = 0;
+            boss = null;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.vx = 0;
+            player.vy = 0;
+            bullets = [];
+            enemies = [];
+            civilians = [];
+            particles = [];
+            powerUps = [];
+            obstacles = [];
+            generateObstacles();
+            document.getElementById('bossHealthContainer').style.display = 'none';
+            updateUI();
+        }
+        
+        function generateObstacles() {
+            obstacles = [];
+            // Progressive obstacles - more and faster at higher levels
+            const obstacleCount = 5 + Math.min(level * 2, 50); // Cap at 50 obstacles
+            
+            for (let i = 0; i < obstacleCount; i++) {
+                let validPosition = false;
+                let x, y, width, height;
+                
+                // Try to find a valid position that doesn't overlap with player start
+                while (!validPosition) {
+                    width = 40 + Math.random() * 60;
+                    height = 40 + Math.random() * 60;
+                    x = Math.random() * (canvas.width - width);
+                    y = Math.random() * (canvas.height - height);
+                    
+                    // Check distance from player start
+                    const dist = Math.hypot(x - player.x, y - player.y);
+                    if (dist > 150) {
+                        validPosition = true;
+                    }
+                }
+                
+                // Random velocity for moving obstacles - faster at higher levels
+                const baseSpeed = 0.2 + Math.random() * 0.3;
+                const speed = baseSpeed + Math.min(level * 0.02, 1); // Max +1 speed
+                const angle = Math.random() * Math.PI * 2;
+                
+                obstacles.push({
+                    x: x,
+                    y: y,
+                    width: width,
+                    height: height,
+                    color: '#7f8c8d',
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed
+                });
+            }
+        }
+        
+        function checkObstacleCollision(x, y, radius) {
+            for (let obstacle of obstacles) {
+                // Check if circle overlaps with rectangle
+                const closestX = Math.max(obstacle.x, Math.min(x, obstacle.x + obstacle.width));
+                const closestY = Math.max(obstacle.y, Math.min(y, obstacle.y + obstacle.height));
+                const dist = Math.hypot(x - closestX, y - closestY);
+                if (dist < radius) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('controlsBar').style.display = 'none';
+            startGame();
+        }
+        
+        function update() {
+            if (!gameStarted || gameOver) return;
+            
+            // Check for boss spawn - required kills increase with level
+            const requiredKills = 4 + Math.floor(level / 2); // Starts at 4, increases every 2 levels
+            if (kills - lastBossKillCount >= requiredKills && !bossActive) {
+                spawnBoss();
+            }
+            
+            // Player movement (smooth tank movement with acceleration)
+            let targetVx = 0;
+            let targetVy = 0;
+            
+            if (keys['w'] || keys['arrowup']) targetVy -= player.speed;
+            if (keys['s'] || keys['arrowdown']) targetVy += player.speed;
+            if (keys['a'] || keys['arrowleft']) targetVx -= player.speed;
+            if (keys['d'] || keys['arrowright']) targetVx += player.speed;
+            
+            // Normalize diagonal movement
+            if (targetVx !== 0 && targetVy !== 0) {
+                targetVx *= 0.707;
+                targetVy *= 0.707;
+            }
+            
+            // Smooth acceleration towards target velocity
+            player.vx += (targetVx - player.vx) * player.acceleration;
+            player.vy += (targetVy - player.vy) * player.acceleration;
+            
+            // Apply friction when no input
+            if (targetVx === 0) player.vx *= player.friction;
+            if (targetVy === 0) player.vy *= player.friction;
+            
+            // Stop very small movements
+            if (Math.abs(player.vx) < 0.05) player.vx = 0;
+            if (Math.abs(player.vy) < 0.05) player.vy = 0;
+            
+            // Tank can move through obstacles - no collision check
+            player.x += player.vx;
+            player.y += player.vy;
+            
+            // Keep player in bounds
+            player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+            player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+            
+            // Reset velocity if hitting bounds
+            if (player.x <= player.radius || player.x >= canvas.width - player.radius) player.vx = 0;
+            if (player.y <= player.radius || player.y >= canvas.height - player.radius) player.vy = 0;
+            
+            // Update bullets
+            bullets.forEach((bullet, index) => {
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
+                
+                // Check obstacle collision
+                if (checkObstacleCollision(bullet.x, bullet.y, bullet.radius)) {
+                    createParticles(bullet.x, bullet.y, '#95a5a6');
+                    bullets.splice(index, 1);
+                    return;
+                }
+                
+                // Boss bullets damage player - more damage at higher levels
+                if (bullet.isBossBullet) {
+                    const dist = Math.hypot(bullet.x - player.x, bullet.y - player.y);
+                    if (dist < player.radius + bullet.radius) {
+                        const damage = 15 + Math.floor(level / 10) * 5; // +5 damage every 10 levels
+                        takeDamage(damage);
+                        createParticles(bullet.x, bullet.y, bullet.color || '#e74c3c');
+                        bullets.splice(index, 1);
+                        return;
+                    }
+                }
+                
+                // Remove if out of bounds
+                if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                    bullets.splice(index, 1);
+                }
+            });
+            
+            // Update boss
+            if (boss && bossActive) {
+                // Boss movement pattern (circles around player)
+                boss.angle += 0.02;
+                const radius = 200;
+                boss.targetX = player.x + Math.cos(boss.angle) * radius;
+                boss.targetY = player.y + Math.sin(boss.angle) * radius;
+                
+                // Move towards target
+                const angle = Math.atan2(boss.targetY - boss.y, boss.targetX - boss.x);
+                boss.x += Math.cos(angle) * boss.speed;
+                boss.y += Math.sin(angle) * boss.speed;
+                
+                // Keep boss in bounds
+                boss.x = Math.max(boss.radius, Math.min(canvas.width - boss.radius, boss.x));
+                boss.y = Math.max(boss.radius, Math.min(canvas.height - boss.radius, boss.y));
+                
+                // Boss shoots projectiles periodically
+                boss.shootTimer--;
+                if (boss.shootTimer <= 0) {
+                    bossShoot();
+                    boss.shootTimer = 60; // Shoot every 60 frames
+                }
+                
+                // Check collision with player
+                const dist = Math.hypot(player.x - boss.x, player.y - boss.y);
+                if (dist < player.radius + boss.radius) {
+                    takeDamage(10);
+                    createParticles(boss.x, boss.y, '#e74c3c');
+                }
+                
+                // Check collision with bullets (only player bullets)
+                bullets.forEach((bullet, bIndex) => {
+                    if (bullet.isBossBullet) return; // Skip boss bullets
+                    const dist = Math.hypot(bullet.x - boss.x, bullet.y - boss.y);
+                    if (dist < boss.radius) {
+                        boss.health -= 5;
+                        createParticles(boss.x, boss.y, '#e74c3c');
+                        bullets.splice(bIndex, 1);
+                        updateBossHealth();
+                        
+                        if (boss.health <= 0) {
+                            // Boss defeated
+                            createParticles(boss.x, boss.y, '#f1c40f');
+                            for (let i = 0; i < 30; i++) {
+                                createParticles(boss.x, boss.y, '#e74c3c');
+                            }
+                            score += 500;
+                            kills++;
+                            lastBossKillCount = kills; // Update for next boss spawn
+                            bossActive = false;
+                            boss = null;
+                            bossSpawned = false;
+                            document.getElementById('bossHealthContainer').style.display = 'none';
+                            
+                            // Level up (max 100 levels)
+                            if (level < 100) {
+                                level++;
+                                generateObstacles();
+                                updateUI();
+                                
+                                // Show level up message for milestone levels
+                                if (level % 10 === 0) {
+                                    showLevelUpMessage(level);
+                                }
+                            } else {
+                                // Max level reached - game continues but no more level ups
+                                updateUI();
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Update enemies
+            enemies.forEach((enemy, eIndex) => {
+                // Move towards player
+                const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+                const newX = enemy.x + Math.cos(angle) * enemy.speed;
+                const newY = enemy.y + Math.sin(angle) * enemy.speed;
+                
+                // Check obstacle collision
+                if (!checkObstacleCollision(newX, enemy.y, enemy.radius)) {
+                    enemy.x = newX;
+                }
+                if (!checkObstacleCollision(enemy.x, newY, enemy.radius)) {
+                    enemy.y = newY;
+                }
+                
+                // Check collision with player - more damage at higher levels
+                const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                if (dist < player.radius + enemy.radius) {
+                    const damage = 5 + Math.floor(level / 10); // +1 damage every 10 levels
+                    takeDamage(damage);
+                    createParticles(enemy.x, enemy.y, '#e74c3c');
+                    enemies.splice(eIndex, 1);
+                }
+                
+                // Check collision with bullets (only player bullets)
+                bullets.forEach((bullet, bIndex) => {
+                    if (bullet.isBossBullet) return; // Skip boss bullets
+                    const dist = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
+                    if (dist < enemy.radius) {
+                        createParticles(enemy.x, enemy.y, '#e74c3c');
+                        enemies.splice(eIndex, 1);
+                        bullets.splice(bIndex, 1);
+                        kills++;
+                        score += 10;
+                        updateUI();
+                        
+                        // Chance to drop power-up
+                        if (Math.random() < 0.3) {
+                            spawnPowerUp(enemy.x, enemy.y);
+                        }
+                    }
+                });
+            });
+            
+            // Update civilians
+            civilians.forEach((civilian, cIndex) => {
+                // Move away from enemies
+                let fleeX = 0;
+                let fleeY = 0;
+                enemies.forEach(enemy => {
+                    const dist = Math.hypot(civilian.x - enemy.x, civilian.y - enemy.y);
+                    if (dist < 150) {
+                        const angle = Math.atan2(civilian.y - enemy.y, civilian.x - enemy.x);
+                        fleeX += Math.cos(angle) * 2;
+                        fleeY += Math.sin(angle) * 2;
+                    }
+                });
+                
+                civilian.x += fleeX;
+                civilian.y += fleeY;
+                
+                // Keep in bounds
+                civilian.x = Math.max(15, Math.min(canvas.width - 15, civilian.x));
+                civilian.y = Math.max(15, Math.min(canvas.height - 15, civilian.y));
+                
+                // Check if rescued (close to player)
+                const dist = Math.hypot(player.x - civilian.x, player.y - civilian.y);
+                if (dist < player.radius + civilian.radius + 10) {
+                    createParticles(civilian.x, civilian.y, '#2ecc71');
+                    civilians.splice(cIndex, 1);
+                    rescued++;
+                    score += 50;
+                    updateUI();
+                }
+                
+                // Check if killed by enemy
+                enemies.forEach(enemy => {
+                    const dist = Math.hypot(civilian.x - enemy.x, civilian.y - enemy.y);
+                    if (dist < enemy.radius + civilian.radius) {
+                        createParticles(civilian.x, civilian.y, '#e74c3c');
+                        civilians.splice(cIndex, 1);
+                    }
+                });
+            });
+            
+            // Update particles
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                particle.alpha = particle.life / particle.maxLife;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+            
+            // Update power-ups
+            powerUps.forEach((powerUp, index) => {
+                powerUp.rotation += 0.05;
+                
+                const dist = Math.hypot(player.x - powerUp.x, player.y - powerUp.y);
+                if (dist < player.radius + powerUp.radius) {
+                    if (powerUp.type === 'health') {
+                        health = Math.min(maxHealth, health + 25);
+                    } else if (powerUp.type === 'ammo') {
+                        ammo = maxAmmo;
+                    } else if (powerUp.type === 'armor') {
+                        armor = Math.min(maxArmor, armor + 50);
+                    }
+                    powerUps.splice(index, 1);
+                    updateUI();
+                }
+            });
+            
+            // Update obstacles (move them)
+            obstacles.forEach(obstacle => {
+                obstacle.x += obstacle.vx;
+                obstacle.y += obstacle.vy;
+                
+                // Bounce off walls
+                if (obstacle.x <= 0 || obstacle.x + obstacle.width >= canvas.width) {
+                    obstacle.vx = -obstacle.vx;
+                }
+                if (obstacle.y <= 0 || obstacle.y + obstacle.height >= canvas.height) {
+                    obstacle.vy = -obstacle.vy;
+                }
+                
+                // Keep in bounds
+                obstacle.x = Math.max(0, Math.min(canvas.width - obstacle.width, obstacle.x));
+                obstacle.y = Math.max(0, Math.min(canvas.height - obstacle.height, obstacle.y));
+            });
+            
+            // Spawn new enemies and civilians (not during boss fight)
+            // Progressive difficulty: more enemies spawn at higher levels
+            if (!bossActive) {
+                const maxEnemies = 3 + wave + Math.floor(level / 5); // More enemies with level
+                if (enemies.length < maxEnemies) {
+                    spawnEnemy();
+                }
+                const maxCivilians = 2 + Math.floor(wave / 2) + Math.floor(level / 10);
+                if (civilians.length < maxCivilians) {
+                    spawnCivilian();
+                }
+            }
+            
+            // Increase wave
+            if (kills > 0 && kills % 10 === 0 && enemies.length === 0 && !bossActive) {
+                wave++;
+                updateUI();
+            }
+        }
+        
+        function spawnBoss() {
+            bossActive = true;
+            bossSpawned = true;
+            boss = {
+                x: canvas.width / 2,
+                y: 100,
+                radius: 55, // Queen size
+                speed: 2.2 + Math.min(level * 0.05, 3), // Faster with level (max +3 speed)
+                health: 10 + (level - 1) * 15, // 10 for level 1, increases with level
+                maxHealth: 10 + (level - 1) * 15,
+                angle: 0,
+                targetX: 0,
+                targetY: 0,
+                shootTimer: Math.max(60 - level * 0.5, 30), // Faster shooting with level (min 30)
+                color: '#e91e63' // Pretty pink
+            };
+            document.getElementById('bossHealthContainer').style.display = 'block';
+            updateBossHealth();
+            
+            // Clear all regular enemies when boss spawns
+            enemies = [];
+        }
+        
+        function bossShoot() {
+            // Boss shoots projectiles - more projectiles at higher levels
+            const projectileCount = 3 + Math.floor(level / 10); // +1 projectile every 10 levels (max 13)
+            const spreadAngle = 0.3 + (level / 10) * 0.1; // Wider spread at higher levels
+            const bulletSpeed = 8 + Math.min(level * 0.1, 5); // Faster bullets with level
+            
+            for (let i = -(projectileCount - 1) / 2; i <= (projectileCount - 1) / 2; i++) {
+                const angle = Math.atan2(player.y - boss.y, player.x - boss.x) + i * spreadAngle;
+                bullets.push({
+                    x: boss.x + Math.cos(angle) * boss.radius,
+                    y: boss.y + Math.sin(angle) * boss.radius,
+                    vx: Math.cos(angle) * bulletSpeed,
+                    vy: Math.sin(angle) * bulletSpeed,
+                    radius: 8,
+                    color: level >= 20 ? '#ff1493' : '#e74c3c', // Pink bullets at level 20+
+                    isBossBullet: true
+                });
+            }
+            
+            // Special abilities every 10 levels (spiral attack)
+            if (level >= 10 && Math.random() < 0.3) {
+                // Spiral attack pattern (30% chance when level >= 10)
+                for (let j = 0; j < 8; j++) {
+                    const spiralAngle = (Date.now() / 100) + (j / 8) * Math.PI * 2;
+                    bullets.push({
+                        x: boss.x + Math.cos(spiralAngle) * boss.radius,
+                        y: boss.y + Math.sin(spiralAngle) * boss.radius,
+                        vx: Math.cos(spiralAngle) * 6,
+                        vy: Math.sin(spiralAngle) * 6,
+                        radius: 6,
+                        color: '#9c27b0',
+                        isBossBullet: true
+                    });
+                }
+            }
+            
+            // Additional special attack at level 30+
+            if (level >= 30 && Math.random() < 0.2) {
+                // Circular burst attack
+                for (let j = 0; j < 12; j++) {
+                    const burstAngle = (j / 12) * Math.PI * 2;
+                    bullets.push({
+                        x: boss.x,
+                        y: boss.y,
+                        vx: Math.cos(burstAngle) * 7,
+                        vy: Math.sin(burstAngle) * 7,
+                        radius: 7,
+                        color: '#ff1493',
+                        isBossBullet: true
+                    });
+                }
+            }
+        }
+        
+        function updateBossHealth() {
+            if (boss) {
+                const healthPercent = (boss.health / boss.maxHealth) * 100;
+                const bossHealthFill = document.getElementById('bossHealthFill');
+                bossHealthFill.style.width = healthPercent + '%';
+                bossHealthFill.textContent = Math.round(boss.health) + ' / ' + boss.maxHealth;
+            }
+        }
+        
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(135, 206, 235, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Draw obstacles
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = obstacle.color;
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                ctx.strokeStyle = '#34495e';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+            
+            // Draw power-ups
+            powerUps.forEach(powerUp => {
+                ctx.save();
+                ctx.translate(powerUp.x, powerUp.y);
+                ctx.rotate(powerUp.rotation);
+                let color = '#f39c12';
+                let icon = '🔫';
+                if (powerUp.type === 'health') {
+                    color = '#e74c3c';
+                    icon = '❤️';
+                } else if (powerUp.type === 'armor') {
+                    color = '#3498db';
+                    icon = '🛡️';
+                }
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(0, 0, powerUp.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(icon, 0, 0);
+                ctx.restore();
+            });
+            
+            // Draw civilians
+            civilians.forEach(civilian => {
+                ctx.fillStyle = civilian.color;
+                ctx.beginPath();
+                ctx.arc(civilian.x, civilian.y, civilian.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('👤', civilian.x, civilian.y);
+            });
+            
+            // Draw boss (pretty queen)
+            if (boss && bossActive) {
+                const pulse = Math.sin(Date.now() / 400) * 4;
+                const time = Date.now() / 100;
+                
+                // Draw beautiful flowing dress (pink gradient)
+                const gradient = ctx.createRadialGradient(boss.x, boss.y + 10, 0, boss.x, boss.y + 10, boss.radius + pulse);
+                gradient.addColorStop(0, '#ffb3d9');
+                gradient.addColorStop(0.5, '#ff80cc');
+                gradient.addColorStop(1, '#e91e63');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.ellipse(boss.x, boss.y + 15, boss.radius + pulse, boss.radius * 0.85, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw dress decorative border
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Draw elegant upper body with gradient
+                const bodyGradient = ctx.createRadialGradient(boss.x, boss.y - 10, 0, boss.x, boss.y - 10, boss.radius * 0.6);
+                bodyGradient.addColorStop(0, '#ffb3d9');
+                bodyGradient.addColorStop(1, '#e91e63');
+                ctx.fillStyle = bodyGradient;
+                ctx.beginPath();
+                ctx.arc(boss.x, boss.y - 10, boss.radius * 0.6 + pulse, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw beautiful tiara/crown with gems
+                ctx.fillStyle = '#ffd700';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ffd700';
+                // Tiara base
+                ctx.fillRect(boss.x - 22, boss.y - boss.radius - 28, 44, 6);
+                // Tiara points (more elegant)
+                for (let i = 0; i < 7; i++) {
+                    const pointX = boss.x - 18 + (i * 6);
+                    ctx.beginPath();
+                    ctx.moveTo(pointX, boss.y - boss.radius - 28);
+                    ctx.lineTo(pointX + 3, boss.y - boss.radius - 45);
+                    ctx.lineTo(pointX + 6, boss.y - boss.radius - 28);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                // Gems on tiara
+                ctx.fillStyle = '#ff1493';
+                ctx.beginPath();
+                ctx.arc(boss.x - 12, boss.y - boss.radius - 35, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x, boss.y - boss.radius - 38, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x + 12, boss.y - boss.radius - 35, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                
+                // Draw beautiful eyes with sparkle
+                const eyeOffset = 12;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(boss.x - eyeOffset, boss.y - 15, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x + eyeOffset, boss.y - 15, 7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw pretty blue eyes
+                ctx.fillStyle = '#87ceeb';
+                ctx.beginPath();
+                ctx.arc(boss.x - eyeOffset, boss.y - 15, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x + eyeOffset, boss.y - 15, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw pupils
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(boss.x - eyeOffset, boss.y - 15, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x + eyeOffset, boss.y - 15, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw eye sparkles
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(boss.x - eyeOffset + 2, boss.y - 17, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x + eyeOffset + 2, boss.y - 17, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw beautiful smile
+                ctx.strokeStyle = '#ff1493';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.arc(boss.x, boss.y - 5, 9, 0.3, Math.PI - 0.3);
+                ctx.stroke();
+                
+                // Draw rosy cheeks
+                ctx.fillStyle = '#ffb3d9';
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.arc(boss.x - 18, boss.y - 8, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x + 18, boss.y - 8, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+                
+                // Draw elegant jewelry/necklace with pearls
+                ctx.fillStyle = '#ffffff';
+                for (let i = -2; i <= 2; i++) {
+                    ctx.beginPath();
+                    ctx.arc(boss.x + i * 8, boss.y + 5, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffd700';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                
+                // Draw elegant sleeves with flowers
+                ctx.fillStyle = '#ff80cc';
+                ctx.beginPath();
+                ctx.arc(boss.x - 25, boss.y, 9, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x + 25, boss.y, 9, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw small flowers on sleeves
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(boss.x - 25, boss.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(boss.x + 25, boss.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw beautiful magical sparkles around queen
+                ctx.fillStyle = '#ffd700';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ffd700';
+                for (let i = 0; i < 8; i++) {
+                    const sparkleAngle = (i / 8) * Math.PI * 2 + time;
+                    const sparkleX = boss.x + Math.cos(sparkleAngle) * (boss.radius + pulse + 20);
+                    const sparkleY = boss.y + Math.sin(sparkleAngle) * (boss.radius + pulse + 20);
+                    ctx.beginPath();
+                    ctx.arc(sparkleX, sparkleY, 2 + Math.sin(time * 3 + i) * 1, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+                
+                // Draw elegant pink aura
+                ctx.strokeStyle = '#ff80cc';
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = '#ff80cc';
+                ctx.beginPath();
+                ctx.arc(boss.x, boss.y, boss.radius + pulse + 18, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw enemies (with level-based visual changes)
+            enemies.forEach(enemy => {
+                // Higher level enemies have different colors
+                let enemyColor = enemy.color;
+                if (enemy.level >= 30) enemyColor = '#8b0000'; // Dark red for level 30+
+                else if (enemy.level >= 20) enemyColor = '#c0392b'; // Red for level 20+
+                else if (enemy.level >= 10) enemyColor = '#e74c3c'; // Bright red for level 10+
+                
+                ctx.fillStyle = enemyColor;
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add glow effect for higher level enemies
+                if (enemy.level >= 20) {
+                    ctx.strokeStyle = '#ffd700';
+                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ffd700';
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.fillStyle = 'white';
+                ctx.font = (enemy.radius > 18 ? '24px' : '20px') + ' Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('👹', enemy.x, enemy.y);
+            });
+            
+            // Draw bullets
+            bullets.forEach(bullet => {
+                ctx.fillStyle = bullet.color;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Draw particles
+            particles.forEach(particle => {
+                ctx.save();
+                ctx.globalAlpha = particle.alpha;
+                ctx.fillStyle = particle.color;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+            
+            // Draw player (tank)
+            const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // Draw tank tracks (bottom layer)
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(-25, 8, 50, 12);
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-25, 8, 50, 12);
+            
+            // Draw track details (wheels)
+            ctx.fillStyle = '#1a1a1a';
+            for (let i = -20; i <= 20; i += 8) {
+                ctx.beginPath();
+                ctx.arc(i, 14, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw tank body (main hull)
+            ctx.fillStyle = '#34495e';
+            ctx.fillRect(-20, -8, 40, 16);
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-20, -8, 40, 16);
+            
+            // Draw tank body details
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(-18, -6, 36, 12);
+            
+            // Draw turret base (rotates with mouse)
+            ctx.rotate(angle);
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.arc(0, 0, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw turret body
+            ctx.fillStyle = '#34495e';
+            ctx.fillRect(-12, -10, 24, 20);
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-12, -10, 24, 20);
+            
+            // Draw cannon barrel
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, -4, 30, 8);
+            ctx.strokeStyle = '#34495e';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, -4, 30, 8);
+            
+            // Draw cannon tip
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(28, -3, 4, 6);
+            
+            // Draw tank hatch
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.arc(0, -5, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw crosshair on turret
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-3, 0);
+            ctx.lineTo(3, 0);
+            ctx.moveTo(0, -3);
+            ctx.lineTo(0, 3);
+            ctx.stroke();
+            
+            ctx.restore();
+            
+            // Draw crosshair
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(mouse.x - 10, mouse.y);
+            ctx.lineTo(mouse.x + 10, mouse.y);
+            ctx.moveTo(mouse.x, mouse.y - 10);
+            ctx.lineTo(mouse.x, mouse.y + 10);
+            ctx.stroke();
+        }
+        
+        function shoot() {
+            if (ammo <= 0) return;
+            
+            ammo--;
+            const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+            bullets.push({
+                x: player.x + Math.cos(angle) * player.radius,
+                y: player.y + Math.sin(angle) * player.radius,
+                vx: Math.cos(angle) * 10,
+                vy: Math.sin(angle) * 10,
+                radius: 5,
+                color: '#f1c40f'
+            });
+            updateUI();
+        }
+        
+        function reload() {
+            if (ammo < maxAmmo) {
+                ammo = maxAmmo;
+                updateUI();
+            }
+        }
+        
+        function takeDamage(amount) {
+            // Armor absorbs 50% of damage first
+            if (armor > 0) {
+                const armorAbsorbed = amount * 0.5; // Armor absorbs 50% of damage
+                const actualArmorDamage = Math.min(armor, armorAbsorbed);
+                armor -= actualArmorDamage;
+                amount -= actualArmorDamage; // Reduce damage by what armor absorbed
+                if (armor < 0) armor = 0;
+            }
+            
+            // Remaining damage goes to health
+            if (amount > 0) {
+                health -= amount;
+            }
+            
+            if (health <= 0) {
+                health = 0;
+                endGame();
+            }
+            updateUI();
+        }
+        
+        function spawnEnemy() {
+            const side = Math.floor(Math.random() * 4);
+            let x, y;
+            
+            if (side === 0) { x = -30; y = Math.random() * canvas.height; }
+            else if (side === 1) { x = canvas.width + 30; y = Math.random() * canvas.height; }
+            else if (side === 2) { x = Math.random() * canvas.width; y = -30; }
+            else { x = Math.random() * canvas.width; y = canvas.height + 30; }
+            
+            // Progressive difficulty: enemies get faster and larger with level
+            const baseSpeed = 1 + Math.random() * 1.5 + wave * 0.2;
+            const levelSpeedBonus = Math.min(level * 0.1, 5); // Max +5 speed from levels
+            const enemyRadius = 15 + Math.min(Math.floor(level / 10), 5); // Larger every 10 levels
+            
+            enemies.push({
+                x: x,
+                y: y,
+                radius: enemyRadius,
+                speed: baseSpeed + levelSpeedBonus,
+                color: '#e74c3c',
+                level: level // Track enemy level for special abilities
+            });
+        }
+        
+        function spawnCivilian() {
+            civilians.push({
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: Math.random() * (canvas.height - 100) + 50,
+                radius: 12,
+                color: '#3498db'
+            });
+        }
+        
+        function spawnEnemies() {
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => spawnEnemy(), i * 1000);
+            }
+        }
+        
+        function spawnCivilians() {
+            for (let i = 0; i < 2; i++) {
+                setTimeout(() => spawnCivilian(), i * 500);
+            }
+        }
+        
+        function spawnPowerUp(x, y) {
+            const rand = Math.random();
+            let type;
+            if (rand < 0.33) type = 'health';
+            else if (rand < 0.66) type = 'ammo';
+            else type = 'armor';
+            
+            powerUps.push({
+                x: x,
+                y: y,
+                radius: 15,
+                type: type,
+                rotation: 0
+            });
+        }
+        
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    radius: 3,
+                    color: color,
+                    life: 30,
+                    maxLife: 30,
+                    alpha: 1
+                });
+            }
+        }
+        
+        function showLevelUpMessage(level) {
+            // Create temporary level up message
+            const message = document.createElement('div');
+            message.style.position = 'absolute';
+            message.style.top = '50%';
+            message.style.left = '50%';
+            message.style.transform = 'translate(-50%, -50%)';
+            message.style.background = 'rgba(0, 0, 0, 0.9)';
+            message.style.color = '#ffd700';
+            message.style.padding = '30px 50px';
+            message.style.borderRadius = '15px';
+            message.style.fontSize = '32px';
+            message.style.fontWeight = 'bold';
+            message.style.zIndex = '1000';
+            message.style.textAlign = 'center';
+            message.style.border = '3px solid #ffd700';
+            message.style.boxShadow = '0 0 30px #ffd700';
+            
+            let milestoneText = `LEVEL ${level} MILESTONE!`;
+            if (level === 10) milestoneText += '\n⚡ Faster Enemies!';
+            if (level === 20) milestoneText += '\n💎 Pink Bullets!';
+            if (level === 30) milestoneText += '\n🔥 Enhanced Boss Attacks!';
+            if (level === 40) milestoneText += '\n⚔️ Stronger Enemies!';
+            if (level === 50) milestoneText += '\n👑 Boss Phase 2!';
+            if (level === 60) milestoneText += '\n💀 Elite Mode!';
+            if (level === 70) milestoneText += '\n🌟 Master Difficulty!';
+            if (level === 80) milestoneText += '\n🔥 Legendary Challenge!';
+            if (level === 90) milestoneText += '\n⚡ Ultimate Test!';
+            if (level === 100) milestoneText += '\n🏆 MAX LEVEL ACHIEVED!';
+            
+            message.textContent = milestoneText;
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                message.style.transition = 'opacity 0.5s';
+                message.style.opacity = '0';
+                setTimeout(() => message.remove(), 500);
+            }, 3000);
+        }
+        
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('rescued').textContent = rescued;
+            document.getElementById('kills').textContent = kills;
+            document.getElementById('ammo').textContent = ammo;
+            document.getElementById('wave').textContent = wave;
+            document.getElementById('level').textContent = level;
+            document.getElementById('maxLevel').textContent = '100';
+            
+            const healthPercent = (health / maxHealth) * 100;
+            const healthFill = document.getElementById('healthFill');
+            healthFill.style.width = healthPercent + '%';
+            healthFill.textContent = Math.round(healthPercent) + '%';
+            
+            const armorPercent = (armor / maxArmor) * 100;
+            const armorFill = document.getElementById('armorFill');
+            armorFill.style.width = armorPercent + '%';
+            armorFill.textContent = Math.round(armorPercent) + '%';
+        }
+        
+        function endGame() {
+            gameOver = true;
+            document.getElementById('finalScore').textContent = `Final Score: ${score}`;
+            document.getElementById('finalStats').textContent = `Rescued: ${rescued} | Kills: ${kills} | Wave: ${wave} | Level: ${level}`;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+        
+        function gameLoop() {
+            if (!gameStarted || gameOver) return;
+            
+            update();
+            draw();
+            
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>
